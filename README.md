@@ -101,5 +101,5 @@ https://app.bupt.edu.cn/site/ncov/xisudailyup
 
 
 
-
+ 
 # 注：本人不承担任何由于未按规定打卡所造成的的任何后果
