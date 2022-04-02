@@ -17,15 +17,18 @@ def load_user():
     user_list = eval(os.environ['USERS'])
     text = str(os.environ['DATA'])
     data_list = []
-    _iter = find.finditer(text)
-    iter_len = 0
-    for _ in _iter:
-        for j in _.groups():
-            iter_len += 1
-            data = '{' + j.replace('\n', ' ') + '}'
-            data_list.append(data)
-    if not iter_len:
-        raise RuntimeWarning('正则匹配到的信息为空')
+    data_dict = {}
+    iter = find.finditer(text)
+    print('iter is ',iter)
+    print(text)
+    for j in iter:
+        key = j.group('key')
+        value = j.group('value')
+        data_dict[key] = value
+        if key == 'askforleave':
+            data_dict['askforleave'] = 0
+            data_list.append(data_dict.copy())
+            data_dict.clear()
 
     return user_list, data_list
 
