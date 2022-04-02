@@ -35,7 +35,7 @@ if DEBUG:
     logging.getLogger('main').addHandler(console)
     logging.getLogger('__main__').addHandler(console)
 
-login_url = 'https://app.bupt.edu.cn/uc/wap/login/check'
+login_url = 'https://auth.bupt.edu.cn/authserver/login'
 backup_login_url = 'https://auth.bupt.edu.cn/authserver/login'
 
 report_url = 'https://app.bupt.edu.cn/uc/wap/login?redirect=https%3A%2F%2Fapp.bupt.edu.cn%2Fsite%2Fncov%2Fxisudailyup'
