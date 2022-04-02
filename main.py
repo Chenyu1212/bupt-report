@@ -73,13 +73,10 @@ def main(user, post_data):
                 backup_check(resp1.text)
                 main_logger.info('{}登录成功'.format(myid))
                 myresp.add_resp('resp1', resp1)
-            try:
-                resp2 = session.post(post_url, headers=Head.head, data=post_data.encode('utf-8'))
-            # 填报数据
-            except Exception as e:
-                main_logger.error(repr(e) + '  填报数据时发生错误')
-                time.sleep(15)
-                continue
+            
+            get_data = get_postdata(post_data)
+            resp2 = session.post(post_url, headers=Head.head, data=get_data)
+            
 
             if myresp.resp_dict['resp1'].status_code != 200:
                 main_logger.warning('用户[{}]登陆失败，状态码不是200'.format(myid))
