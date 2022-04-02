@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter
 from data import *
 from checks import *
 import time
@@ -15,18 +16,16 @@ def load_user():
     """
     user_list = eval(os.environ['USERS'])
     text = str(os.environ['DATA'])
-    # print(text)
     data_list = []
-    data_dict = {}
-    iter = find.finditer(text)
-    for j in iter:
-        key = j.group('key')
-        value = j.group('value')
-        data_dict[key] = value
-        if key == 'askforleave':
-            data_dict['askforleave'] = 0
-            data_list.append(data_dict.copy())
-            data_dict.clear()
+    _iter = find.finditer(text)
+    iter_len = 0
+    for _ in _iter:
+        for j in _.groups():
+            iter_len += 1
+            data = '{' + j.replace('\n', ' ') + '}'
+            data_list.append(data)
+    if not iter_len:
+        raise RuntimeWarning('正则匹配到的信息为空')
 
     return user_list, data_list
 
@@ -39,6 +38,8 @@ def main(user, post_data):
     # 记录已重试次数
     RETURN_EMAIL = user['mail']
     session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=15))
+    session.mount('https://', HTTPAdapter(max_retries=15))
     account = user['user']
     pswd = user['pswd']
     myid = user['id']
@@ -68,10 +69,13 @@ def main(user, post_data):
                 backup_check(resp1.text)
                 main_logger.info('{}登录成功'.format(myid))
                 myresp.add_resp('resp1', resp1)
-
-            get_data = get_postdata(post_data)
-            resp2 = session.post(post_url, headers=Head.head, data=get_data)
+            try:
+                resp2 = session.post(post_url, headers=Head.head, data=post_data.encode('utf-8'))
             # 填报数据
+            except Exception as e:
+                main_logger.error(repr(e) + '  填报数据时发生错误')
+                time.sleep(15)
+                continue
 
             if myresp.resp_dict['resp1'].status_code != 200:
                 main_logger.warning('用户[{}]登陆失败，状态码不是200'.format(myid))
@@ -94,9 +98,10 @@ def main(user, post_data):
 
             break
         #     正常执行一次结束
-        except ConnectionError as er:
+        except requests.ConnectionError as er:
             repr(er)
             main_logger.error(str(er))
+            time.sleep(15)
             continue
         #     第二登陆方式莫名其妙会出现的问题
 
@@ -105,13 +110,15 @@ def main(user, post_data):
             main_logger.error(str(mes))
             if RETURN_EMAIL:
                 error_mail(user, get_log())
+            exit(-1)
+            # 登陆失败次数达到最大时会抛出的异常
 
         except RuntimeWarning as mes:
             print(str(mes) + '请检查输入的账户信息')
             if RETURN_EMAIL:
                 error_mail(user, str(mes) + '请检查输入的账户信息')
             exit(-1)
-        #     登陆时会出现的错误
+        #     登陆失败时会抛出出现的错误
         #     随便找了两个错误来捕捉
     session.close()
 
@@ -119,7 +126,10 @@ def main(user, post_data):
 if __name__ == '__main__':
     user_list, data_list = load_user()
     length = len(user_list)
+    if len(user_list) != len(data_list):
+        raise KeyError("数据读取发生错误")
     for i in range(length):
+
         try:
             main(user_list[i], data_list[i])
             if user_list[i]['mail']:
@@ -128,7 +138,7 @@ if __name__ == '__main__':
                 else:
                     right_mail(user_list[i])
 
-        except KeyError or IndexError as e:
+        except (KeyError, IndexError) as e:
             print(repr(e))
             print("请检查输入的历史填报数据")
             other_logger.error(repr(e))
