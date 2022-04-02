@@ -19,8 +19,9 @@ def load_user():
     data_list = []
     data_dict = {}
     iter = find.finditer(text)
-    print('iter is ',iter)
-    print(text)
+    main_logger.info('iter s'+iter)
+    main_logger.info(text)
+
     for j in iter:
         key = j.group('key')
         value = j.group('value')
